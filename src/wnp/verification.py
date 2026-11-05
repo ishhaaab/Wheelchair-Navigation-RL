@@ -1,7 +1,7 @@
-"""Shared exhaustive distribution checks used by tests and artifact generation.
+"""Shared distribution and numerical-gradient checks used by tests and the CLI.
 
 Run `python -m wnp.verification` to write results/verification.json. This module
-does not run Task 4 finite differences, gradcheck, optimization, or recovery.
+does not run recovery experiments or bootstrap fitting campaigns.
 """
 
 import argparse
@@ -17,7 +17,11 @@ import torch
 from wnp.demos import enumerate_trajectories, _validate_starts
 from wnp.env import GridMDP
 from wnp.features import feature_table
-from wnp.soft_dp import _validate_model, expected_features, plan, trajectory_log_prob
+from wnp.soft_dp import (
+    FEATURE_ROUNDOFF_HEADROOM, MAX_SCORE_BUDGET, _validate_model,
+    expected_features, plan, trajectory_log_prob,
+)
+from wnp.irl import loss, physical_weights
 
 
 def exhaustive_fixture(name: str) -> tuple[GridMDP, torch.Tensor, torch.Tensor, int]:
@@ -196,15 +200,167 @@ def verify_distribution(name: str, tolerance: float = 1e-10) -> dict:
     return report
 
 
-def write_verification(path: str | Path) -> dict:
-    """Generate numerical evidence only after both shared fixture checks pass."""
+def _gradient_fixture():
+    """Occupied tiny MDP with absorbing goals and a disconnected free component."""
+    occupied = np.zeros((3, 5), dtype=bool)
+    occupied[:, 3] = True
+    occupied[1, 1] = True
+    env = GridMDP(occupied, (0, 0, 0), (0, 2), headings=4)
+    features = feature_table(env)
+    weights = torch.tensor([1., .7, 1.2], dtype=torch.float64)
+    horizon, penalty = 5, 17.0
+    paths = enumerate_trajectories(env, env.start_state, horizon)
+    completed = [r for r in paths if r.arrival_step is not None]
+    unfinished = [r for r in paths if r.arrival_step is None]
+    records = [completed[0], unfinished[0], completed[-1], unfinished[-1]]
+    for heading in range(env.headings):
+        records.extend(enumerate_trajectories(env, env.state_index[(*env.goal, heading)], horizon))
+    return env, features, weights, horizon, penalty, records
+
+
+def _gradient_configuration(env, weights, horizon, penalty, records):
+    starts = {r.states[0] for r in records}
+    reachable, pending = set(starts), list(starts)
+    while pending:
+        state = pending.pop()
+        for action in range(3):
+            if bool(env.legal[state, action]):
+                successor = int(env.next_state[state, action])
+                if successor not in reachable:
+                    reachable.add(successor)
+                    pending.append(successor)
+    return {
+        "fixture": "single_action_and_disconnected_3x5",
+        "shape": list(env.shape), "occupied_cells": np.argwhere(env.occupied).tolist(),
+        "start": list(env.start), "goal": list(env.goal), "headings": env.headings,
+        "horizon": horizon, "terminal_penalty": penalty, "weights": weights.tolist(),
+        "d_safe": 2.0, "single_legal_action_states": int((env.legal.sum(1) == 1).sum()),
+        "unreachable_states": len(env.states) - len(reachable),
+        "unfinished_demonstrations": sum(r.arrival_step is None for r in records),
+        "demonstrations": [{"states": list(r.states), "actions": list(r.actions),
+                            "arrival_step": r.arrival_step} for r in records],
+    }
+
+
+def _central_difference(function, argument: torch.Tensor, step: float = 1e-5):
+    columns = []
+    with torch.no_grad():
+        for index in range(len(argument)):
+            offset = torch.zeros_like(argument)
+            offset[index] = step
+            columns.append((function(argument + offset) - function(argument - offset)) / (2 * step))
+    return torch.stack(columns, dim=-1)
+
+
+def _empirical_features(features, records):
+    counts = [features[list(r.states[:-1]), list(r.actions)].sum(0) for r in records]
+    return torch.stack(counts).mean(0)
+
+
+def verify_gradients() -> dict:
+    """Test B: physical-weight mean NLL, FD, feature identity, and gradcheck."""
+    env, features, base_weights, horizon, penalty, records = _gradient_fixture()
+    weights = base_weights.clone().requires_grad_(True)
+    nll = lambda w: -trajectory_log_prob(env, features, w, records, penalty).mean()
+    autograd = torch.autograd.grad(nll(weights), weights)[0]
+    finite_difference = _central_difference(nll, base_weights)
+    solution = plan(env, features, weights, horizon, penalty)
+    analytical = (_empirical_features(features, records)
+                  - expected_features(env, features, solution, [r.states[0] for r in records]))
+    finite = True
+    for state in range(len(env.states)):
+        gradient = torch.autograd.grad(solution.values[0, state], weights, retain_graph=True)[0]
+        finite = finite and bool(torch.isfinite(gradient).all())
+    logp = trajectory_log_prob(env, features, weights, records, penalty)
+    for entry in logp:
+        gradient = torch.autograd.grad(entry, weights, retain_graph=True)[0]
+        finite = finite and bool(torch.isfinite(gradient).all())
+    config = {"eps": 1e-6, "atol": 1e-5, "rtol": 1e-3}
+    gradcheck = torch.autograd.gradcheck(nll, (weights,), **config)
+    margin = terminal_margin_diagnostic(env, features, base_weights, horizon, penalty)
     report = {
-        "schema_version": 1, "scope": "Task 3 exhaustive distribution verification",
+        **_gradient_configuration(env, base_weights, horizon, penalty, records),
+        "autograd": autograd.tolist(), "finite_difference": finite_difference.tolist(),
+        "empirical_minus_expected": analytical.tolist(),
+        "max_autograd_finite_difference_error": (autograd - finite_difference).abs().max().item(),
+        "max_autograd_analytical_error": (autograd - analytical).abs().max().item(),
+        "max_finite_difference_analytical_error": (finite_difference - analytical).abs().max().item(),
+        "finite_difference_step": 1e-5, "tolerance": 1e-7,
+        "gradcheck": bool(gradcheck), "gradcheck_config": config,
+        "all_state_gradients_finite": finite, "terminal_margin": margin,
+    }
+    for key in ("max_autograd_finite_difference_error", "max_autograd_analytical_error",
+                "max_finite_difference_analytical_error"):
+        assert math.isfinite(report[key]) and report[key] < report["tolerance"], key
+    assert finite and gradcheck and margin["passed"]
+    return report
+
+
+def verify_regularized() -> dict:
+    """Independently check softplus chain rule and physical-weight regularization."""
+    env, features, weights, horizon, penalty, records = _gradient_fixture()
+    raw = weights[1:].expm1().log().requires_grad_(True)
+    l2 = .03
+    objective = lambda x: loss(env, features, records, x, l2, penalty)
+    autograd = torch.autograd.grad(objective(raw), raw)[0]
+    finite_difference = _central_difference(objective, raw)
+    physical = physical_weights(raw)
+    solution = plan(env, features, physical, horizon, penalty)
+    physical_nll_gradient = (_empirical_features(features, records)
+        - expected_features(env, features, solution, [r.states[0] for r in records]))
+    analytical = (physical_nll_gradient[1:] + l2 * physical[1:]) * raw.sigmoid()
+    config = {"eps": 1e-6, "atol": 1e-5, "rtol": 1e-3}
+    checked = torch.autograd.gradcheck(objective, (raw,), **config)
+    report = {
+        "fixture": "single_action_and_disconnected_3x5", "raw": raw.tolist(),
+        "physical_weights": physical.tolist(), "l2": l2, "terminal_penalty": penalty,
+        "autograd": autograd.tolist(), "finite_difference": finite_difference.tolist(),
+        "analytical_chain_rule": analytical.tolist(),
+        "max_autograd_finite_difference_error": (autograd - finite_difference).abs().max().item(),
+        "max_autograd_analytical_error": (autograd - analytical).abs().max().item(),
+        "finite_difference_step": 1e-5, "tolerance": 1e-7,
+        "gradcheck": bool(checked), "gradcheck_config": config,
+    }
+    assert report["max_autograd_finite_difference_error"] < report["tolerance"]
+    assert report["max_autograd_analytical_error"] < report["tolerance"]
+    assert checked
+    return report
+
+
+def verify_hessian() -> dict:
+    """On that same fixture compare Hessian(V0) to -d E[features]/d weights."""
+    env, features, weights, horizon, penalty, records = _gradient_fixture()
+    value = lambda w: plan(env, features, w, horizon, penalty).values[0, env.start_state]
+    expected = lambda w: expected_features(env, features, plan(
+        env, features, w, horizon, penalty), [env.start_state])
+    hessian = torch.autograd.functional.hessian(value, weights)
+    negative_expected_fd = -_central_difference(expected, weights)
+    discrepancy = (hessian - negative_expected_fd).abs().max().item()
+    report = {
+        **_gradient_configuration(env, weights, horizon, penalty, records),
+        "hessian": hessian.tolist(), "negative_expected_features_fd": negative_expected_fd.tolist(),
+        "max_hessian_expected_features_fd_error": discrepancy,
+        "symmetry_error": (hessian - hessian.T).abs().max().item(),
+        "finite_difference_step": 1e-5, "tolerance": 1e-7,
+    }
+    assert math.isfinite(discrepancy) and discrepancy < report["tolerance"]
+    return report
+
+
+def write_verification(path: str | Path) -> dict:
+    """Generate evidence only after every shared distribution/gradient check passes."""
+    report = {
+        "schema_version": 2, "scope": "Tasks 3-4 distribution and gradient verification",
         "versions": {"python": platform.python_version(), "torch": str(torch.__version__),
                      "numpy": np.__version__},
         "fixtures": {name: verify_distribution(name)
                      for name in ("four_heading", "eight_heading")},
-        "task4_checks": "NOT RUN",
+        "task4_checks": {"gradients": verify_gradients(),
+                         "regularized": verify_regularized(), "hessian": verify_hessian()},
+        "numerical_domain": {"max_score_budget": MAX_SCORE_BUDGET,
+                             "feature_roundoff_headroom": FEATURE_ROUNDOFF_HEADROOM,
+                             "unsupported_scales": "explicit ValueError, no clipping"},
+        "recovery_experiments": "NOT RUN",
     }
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -222,6 +378,14 @@ def main() -> None:
         print(f"{name}: trajectories={fixture['trajectory_count']}, "
               f"probability_error={fixture['max_probability_error']:.16g}, "
               f"expected_features_error={fixture['max_expected_features_error']:.16g}")
+    checks = report["task4_checks"]
+    print(f"NLL gradient FD error={checks['gradients']['max_autograd_finite_difference_error']:.16g}, "
+          f"analytical error={checks['gradients']['max_autograd_analytical_error']:.16g}, "
+          f"gradcheck={checks['gradients']['gradcheck']}")
+    print(f"Regularized raw FD error={checks['regularized']['max_autograd_finite_difference_error']:.16g}, "
+          f"gradcheck={checks['regularized']['gradcheck']}")
+    print(f"Hessian/expected-features FD error="
+          f"{checks['hessian']['max_hessian_expected_features_fd_error']:.16g}")
     print(f"Saved {args.output}")
 
 

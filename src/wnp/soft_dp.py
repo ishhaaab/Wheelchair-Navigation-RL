@@ -13,6 +13,12 @@ from wnp.demos import (
 from wnp.env import GridMDP
 
 
+# Keep absolute trajectory scores and log partitions far below scales where a
+# unit-temperature entropy correction disappears in float64 subtraction.
+MAX_SCORE_BUDGET = 1000.0
+FEATURE_ROUNDOFF_HEADROOM = 16.0
+
+
 @dataclass(frozen=True)
 class PlanResult:
     """All-state values [T+1,S] and log policy [T,S,3], with autograd intact."""
@@ -44,12 +50,14 @@ def _validate_feature_horizon(features: torch.Tensor, horizon: int) -> None:
 
     A small weight can hide a huge feature in the reward while its cumulative
     feature count, and hence a required weight derivative, still overflows.
+    Reserve a factor of 16 for roundoff and gradient/expectation accumulation.
     Divide the float64 limit by T rather than multiplying features by T, so the
     validation itself cannot overflow. The bound may reject a large feature
     that cannot actually recur T times; no clipping or graph disconnection is
     used to pretend such numerical scales are supported.
     """
-    if horizon and bool((features > torch.finfo(torch.float64).max / horizon).any()):
+    if horizon and bool((features > torch.finfo(torch.float64).max
+                         / horizon / FEATURE_ROUNDOFF_HEADROOM).any()):
         raise ValueError("cumulative features and weight derivatives may exceed float64 range")
 
 
@@ -89,6 +97,10 @@ def plan(
     reward = -(features @ weights)
     if not bool(torch.isfinite(reward).all()):
         raise ValueError("features and weights produce unrepresentable rewards")
+    score_budget = (reward.abs().max() + math.log(3.0)) * horizon + terminal_penalty
+    if bool(score_budget > MAX_SCORE_BUDGET):
+        raise ValueError("outside supported numerical domain: M + T*(max|reward| + log(3)) "
+                         f"must be <= {MAX_SCORE_BUDGET}")
     masked_reward = reward.masked_fill(~env.legal, -torch.inf)
     terminal = weights.new_full((len(env.states),), -float(terminal_penalty)).masked_fill(
         env.is_goal, 0.0)

@@ -47,7 +47,9 @@ def test_verification_artifact_is_generated_from_shared_checks(tmp_path):
     saved = json.loads(path.read_text())
     assert saved == report
     assert set(saved["fixtures"]) == {"four_heading", "eight_heading"}
-    assert saved["task4_checks"] == "NOT RUN"
+    assert saved["task4_checks"]["gradients"]["gradcheck"] is True
+    assert saved["task4_checks"]["regularized"]["gradcheck"] is True
+    assert saved["task4_checks"]["hessian"]["max_hessian_expected_features_fd_error"] < 1e-7
 
 
 def test_time_dependent_policy_is_normalized_and_invalid_actions_have_zero_mass():
@@ -232,10 +234,10 @@ def test_cumulative_feature_overflow_is_rejected_before_invalid_results(entrypoi
             expected_features(env, phi, ordinary, [env.start_state])
 
 
-def test_extreme_but_representable_single_step_has_finite_results_and_gradients():
+def test_large_single_step_with_headroom_has_finite_results_and_gradients():
     env = GridMDP(np.array([[False, True, False]]), (0, 0, 0), (0, 2), headings=4)
-    phi = feature_table(env, d_safe=1e154)
-    weights = torch.tensor([1., .7, 1e-308], dtype=torch.float64, requires_grad=True)
+    phi = feature_table(env, d_safe=1e150)
+    weights = torch.tensor([1., .7, 1e-300], dtype=torch.float64, requires_grad=True)
     result = plan(env, phi, weights, 1)
     assert torch.isfinite(result.values).all()
     value_gradient = torch.autograd.grad(result.values[0, env.start_state], weights)[0]
@@ -245,3 +247,58 @@ def test_extreme_but_representable_single_step_has_finite_results_and_gradients(
     torch.testing.assert_close(logp, torch.full((2,), -np.log(2), dtype=torch.float64),
                                atol=1e-13, rtol=0)
     assert torch.isfinite(torch.autograd.grad(logp.mean(), weights)[0]).all()
+
+
+@pytest.mark.parametrize("api", ["policy", "likelihood", "expectation"])
+def test_entropy_losing_score_scale_is_explicitly_rejected(api):
+    env = GridMDP(np.array([[False, True, False]]), (0, 0, 0), (0, 2), headings=4)
+    phi = feature_table(env, d_safe=1e8)
+    weights = torch.tensor([1., .7, 1.], dtype=torch.float64)
+    with pytest.raises(ValueError, match="numerical domain"):
+        if api == "likelihood":
+            records = enumerate_trajectories(env, env.start_state, 1)
+            trajectory_log_prob(env, phi, weights, records)
+        else:
+            result = plan(env, phi, weights, 1)
+            if api == "expectation":
+                expected_features(env, phi, result, [env.start_state])
+
+
+def test_supported_equal_turns_normalize_consistently_across_apis_and_derivatives():
+    env = GridMDP(np.array([[False, True, False]]), (0, 0, 0), (0, 2), headings=4)
+    phi = feature_table(env, d_safe=3)
+    weights = torch.tensor([1., .7, 1.], dtype=torch.float64, requires_grad=True)
+    result = plan(env, phi, weights, 1)
+    torch.testing.assert_close(result.log_policy[0, env.start_state].exp(),
+                               torch.tensor([0., .5, .5], dtype=torch.float64),
+                               atol=1e-13, rtol=0)
+    records = enumerate_trajectories(env, env.start_state, 1)
+    logp = trajectory_log_prob(env, phi, weights, records)
+    torch.testing.assert_close(logp.exp(), torch.full((2,), .5, dtype=torch.float64),
+                               atol=1e-13, rtol=0)
+    assert abs(logp.exp().sum().item() - 1) < 1e-13
+    expected = expected_features(env, phi, result, [env.start_state])
+    torch.testing.assert_close(expected,
+                               torch.tensor([0., np.pi / 2, 4.], dtype=torch.float64),
+                               atol=1e-13, rtol=0)
+    assert torch.isfinite(torch.autograd.grad(logp.mean(), weights)[0]).all()
+    assert torch.isfinite(torch.autograd.grad(result.values[0, env.start_state], weights)[0]).all()
+
+
+@pytest.mark.parametrize("api", ["value_gradient", "likelihood_gradient", "expected_features"])
+def test_near_float64_limit_features_require_roundoff_headroom(api):
+    env = GridMDP(np.array([[False, True, False]]), (0, 0, 0), (0, 2), headings=4)
+    phi = feature_table(env, d_safe=np.sqrt(np.finfo(np.float64).max))
+    weights = torch.tensor([1., .7, 1e-308], dtype=torch.float64, requires_grad=True)
+    assert torch.isfinite(phi).all()
+    with pytest.raises(ValueError, match="cumulative.*float64"):
+        if api == "value_gradient":
+            result = plan(env, phi, weights, 1, 17)
+            torch.autograd.grad(result.values[0, env.start_state], weights)
+        elif api == "likelihood_gradient":
+            records = enumerate_trajectories(env, env.start_state, 1)
+            logp = trajectory_log_prob(env, phi, weights, records, 17)
+            torch.autograd.grad(logp.mean(), weights)
+        else:
+            result = plan(env, feature_table(env), weights, 1, 17)
+            expected_features(env, phi, result, [env.start_state])
