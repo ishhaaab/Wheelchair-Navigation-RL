@@ -1,0 +1,148 @@
+{
+  "diagnostic": {
+    "completion_probability": 0.9999999999965422,
+    "condition_number": 27.575036058796975,
+    "covariance": [
+      [
+        29.894356906190918,
+        -0.6202289871362116
+      ],
+      [
+        -0.6202289871362103,
+        1.0979462231756538
+      ]
+    ],
+    "covariance_symmetry_error": 1.2212453270876722e-15,
+    "eigenvalues": [
+      1.0845936664995188,
+      29.907709462867054
+    ],
+    "eigenvector_convention": "Columns for ascending eigenvalues of (H+H.T)/2",
+    "eigenvectors": [
+      [
+        -0.021523443359273135,
+        -0.9997683438606968
+      ],
+      [
+        -0.9997683438606968,
+        0.021523443359273135
+      ]
+    ],
+    "expected_features": [
+      7.782193231310826,
+      15.149245672910325,
+      0.719794894090124
+    ],
+    "feature_correlation": -0.10825972447763405,
+    "free_feature_order": [
+      "turning",
+      "clearance"
+    ],
+    "gates": {
+      "completion_at_least_0.90": true,
+      "condition_at_most_100": true,
+      "min_eigenvalue_at_least_0.1": true,
+      "terminal_penalty_margin": true
+    },
+    "passed": true,
+    "predicted_asymptotic_std_n2048": [
+      0.004065373480831795,
+      0.021213118739235273
+    ],
+    "state_mass_error": 3.3306690738754696e-16,
+    "terminal_margin": {
+      "finishable_reachable_pairs": 638,
+      "horizon": 24,
+      "limitation": "Reference weights only; finite M does not guarantee completion.",
+      "margin": 1.0,
+      "max_optimal_finishing_cost": 12.933996988096714,
+      "passed": true,
+      "reference_weights": [
+        1.0,
+        0.7,
+        1.2
+      ],
+      "starts": [
+        36
+      ],
+      "starts_can_finish": true,
+      "terminal_penalty": 30.0,
+      "unfinishable_reachable_pairs": 262
+    }
+  },
+  "metadata": {
+    "configuration": {
+      "bootstrap_refits": 100,
+      "d_safe": 2.0,
+      "goal": [
+        2,
+        4
+      ],
+      "headings": 4,
+      "horizon": 24,
+      "l2_values": [
+        0.0,
+        0.001,
+        0.01
+      ],
+      "occupied": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "sample_sizes": [
+        32,
+        128,
+        512,
+        2048
+      ],
+      "seeds": [
+        11,
+        29,
+        47,
+        83,
+        101
+      ],
+      "sensitivity_sizes": [
+        32,
+        2048
+      ],
+      "shape": [
+        5,
+        5
+      ],
+      "start": [
+        2,
+        0,
+        0
+      ],
+      "terminal_penalty": 30.0,
+      "torch_threads": 1,
+      "truth": [
+        1.0,
+        0.7,
+        1.2
+      ]
+    },
+    "fingerprint": "f1103d832a9208cbd0ab723bf9bcb57c74999275abd409e1a03198f6bb7a65fa",
+    "model_sources": {
+      "demos": "7dc9f6f6efa85b20097cfe067a6effffc248a034435a42c35240aed565bfaddc",
+      "env": "43267f7b80acb8a8dea77b20edda5744f6b756e00c96a6480edd10484b819f11",
+      "features": "2ad0dfcca5e849df2178fb9fb54b213701deac4602846b7b4da76b76ab3ef8dc",
+      "irl": "76e2dc30dad91736b38e4bc349b8e0275b9d5fcb2926be4e9c74181f611f1885",
+      "soft_dp": "71ed16828137171bb5a56bffd2a9d65f61219f9279f2fdb36677f76bf0f3d932"
+    },
+    "protocol_version": 1,
+    "versions": {
+      "matplotlib": "3.11.2",
+      "numpy": "2.5.4",
+      "python": "3.13.13",
+      "torch": "2.15.0+cpu"
+    }
+  }
+}
