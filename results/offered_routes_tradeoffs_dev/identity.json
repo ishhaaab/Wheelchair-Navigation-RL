@@ -1,0 +1,280 @@
+{
+  "checkpoint": "29051aebf4f3a784f2b4ec9e7deffa6c557ee729",
+  "configuration": {
+    "bootstrap_refits": 10000,
+    "bootstrap_seed": 920001,
+    "candidate_rule": "feature_tradeoffs_v2",
+    "choices_per_layout": 64,
+    "d_safe": 2.0,
+    "development_seeds": [
+      10000,
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009
+    ],
+    "final_seeds": [
+      20000,
+      20001,
+      20002,
+      20003,
+      20004,
+      20005,
+      20006,
+      20007,
+      20008,
+      20009,
+      20010,
+      20011,
+      20012,
+      20013,
+      20014,
+      20015,
+      20016,
+      20017,
+      20018,
+      20019,
+      20020,
+      20021,
+      20022,
+      20023,
+      20024,
+      20025,
+      20026,
+      20027,
+      20028,
+      20029,
+      20030,
+      20031,
+      20032,
+      20033,
+      20034,
+      20035,
+      20036,
+      20037,
+      20038,
+      20039,
+      20040,
+      20041,
+      20042,
+      20043,
+      20044,
+      20045,
+      20046,
+      20047,
+      20048,
+      20049,
+      20050,
+      20051,
+      20052,
+      20053,
+      20054,
+      20055,
+      20056,
+      20057,
+      20058,
+      20059,
+      20060,
+      20061,
+      20062,
+      20063,
+      20064,
+      20065,
+      20066,
+      20067,
+      20068,
+      20069,
+      20070,
+      20071,
+      20072,
+      20073,
+      20074,
+      20075,
+      20076,
+      20077,
+      20078,
+      20079,
+      20080,
+      20081,
+      20082,
+      20083,
+      20084,
+      20085,
+      20086,
+      20087,
+      20088,
+      20089,
+      20090,
+      20091,
+      20092,
+      20093,
+      20094,
+      20095,
+      20096,
+      20097,
+      20098,
+      20099
+    ],
+    "goal": [
+      19,
+      19
+    ],
+    "headings": 4,
+    "horizon": 160,
+    "max_attempts": 1000,
+    "obstacle_probability": 0.2,
+    "shape": [
+      20,
+      20
+    ],
+    "start": [
+      0,
+      0,
+      0
+    ],
+    "terminal_penalty": 200.0
+  },
+  "protocol": {
+    "bootstrap_percentile_method": "linear",
+    "bootstrap_percentiles": [
+      1.25,
+      98.75
+    ],
+    "bootstrap_unit": "layout",
+    "candidate_ids": "lexicographic unpadded action sequence",
+    "candidate_library": "six lexicographic feature-priority extrema",
+    "candidate_order": [
+      "distance",
+      "action_count",
+      "action_tuple"
+    ],
+    "candidate_rule": "feature_tradeoffs_v2",
+    "choice_seed_sequence_prefix": 420001,
+    "development_design_gate": {
+      "minimum_profile_disagreement": 0.2,
+      "minimum_varying_fraction": 0.2,
+      "normalized_max_condition": 100.0,
+      "normalized_min_eigenvalue": 0.01
+    },
+    "oracle_completion_threshold": 0.9,
+    "pair_selection": "nondominated balanced range-normalized opposing features",
+    "prediction_tie_choice": "shortest route A",
+    "prediction_tie_tolerance": 1e-12,
+    "shortest_baseline": "shortest offered route, then action count and action tuple",
+    "task": "binary completed offered-route choice",
+    "temperature": 1.0,
+    "torch_threads": 1
+  },
+  "protocol_version": 2,
+  "recovery_sha256": "815ba19c58ba73e4d58305863af7f0e31f2591c8e81ad5064cbce1491f2551c5",
+  "selected_models": [
+    {
+      "name": "fixed",
+      "weights": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "soft_distance",
+      "weights": [
+        1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "oracle",
+      "weights": [
+        1.0,
+        0.7,
+        1.2
+      ]
+    },
+    {
+      "checkpoint": "29051aebf4f3a784f2b4ec9e7deffa6c557ee729",
+      "l2": 0.0,
+      "n": 2048,
+      "name": "learned_11",
+      "training_seed": 11,
+      "weights": [
+        1.0,
+        0.7002029477121459,
+        1.1757970135045182
+      ]
+    },
+    {
+      "checkpoint": "29051aebf4f3a784f2b4ec9e7deffa6c557ee729",
+      "l2": 0.0,
+      "n": 2048,
+      "name": "learned_29",
+      "training_seed": 29,
+      "weights": [
+        1.0,
+        0.6970856988181451,
+        1.214997677508333
+      ]
+    },
+    {
+      "checkpoint": "29051aebf4f3a784f2b4ec9e7deffa6c557ee729",
+      "l2": 0.0,
+      "n": 2048,
+      "name": "learned_47",
+      "training_seed": 47,
+      "weights": [
+        1.0,
+        0.6990443432951222,
+        1.2002705230495214
+      ]
+    },
+    {
+      "checkpoint": "29051aebf4f3a784f2b4ec9e7deffa6c557ee729",
+      "l2": 0.0,
+      "n": 2048,
+      "name": "learned_83",
+      "training_seed": 83,
+      "weights": [
+        1.0,
+        0.6995114399047603,
+        1.1659384624115505
+      ]
+    },
+    {
+      "checkpoint": "29051aebf4f3a784f2b4ec9e7deffa6c557ee729",
+      "l2": 0.0,
+      "n": 2048,
+      "name": "learned_101",
+      "training_seed": 101,
+      "weights": [
+        1.0,
+        0.6927382049277039,
+        1.2192823210856518
+      ]
+    }
+  ],
+  "source_hashes": {
+    "cli": "443941b1f86092758bd5bd6706d3c45059934141f49080ccf5b6b0bf07bd7efb",
+    "demos": "7dc9f6f6efa85b20097cfe067a6effffc248a034435a42c35240aed565bfaddc",
+    "env": "43267f7b80acb8a8dea77b20edda5744f6b756e00c96a6480edd10484b819f11",
+    "features": "2ad0dfcca5e849df2178fb9fb54b213701deac4602846b7b4da76b76ab3ef8dc",
+    "offered_routes": "a24c22724d51e83d254f739d4c70d6185cab5944b31836a4ef7869563c06233b",
+    "route_choice": "6842cc5657975c492511b445d268129379e163ac228095ebeb54b5dab2680070",
+    "route_design": "bc70aaccbfca2c42a86236227f199f29a33af4f6a92902e398467cfcd8933e2e",
+    "route_metrics": "21d91d4c69327af5469a2268a22236145d3737f17f5a882af1268dbc7e76405a",
+    "routes": "f4515c3604b192cc682eaa4e5c1e1e5bf7028e9cec0e8fec9a4fd637e0d753dc",
+    "soft_dp": "71ed16828137171bb5a56bffd2a9d65f61219f9279f2fdb36677f76bf0f3d932",
+    "verification": "9c878e8055ef2f521b7ed8ea20b3d4e4cdc0ab49c3aafc3490f18358d2c6ff07"
+  },
+  "stage": "development",
+  "versions": {
+    "numpy": "2.5.4",
+    "python": "3.13.13",
+    "torch": "2.15.0+cpu"
+  }
+}

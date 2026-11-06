@@ -240,5 +240,166 @@ comparison with shortest-path/fixed-weight planning. Log-log error slopes from
 only five seeds are noisy descriptive summaries; non-monotonic errors must not
 be hidden. Local identifiability is not proof of global psychological uniqueness.
 
-The project intentionally stops after this tiny synthetic stage. Human collection,
-baselines, and large-layout route-prediction experiments require separate review.
+## Withdrawn offered-route development experiment
+
+**The version-1 final protocol is withdrawn.** Its same-distance candidates did
+not test the intended preference trade-offs. The following subsection preserves
+the historical development result; use the revised experiment below instead.
+
+The next implemented task is **binary choice between two offered completed
+routes**, not unrestricted route prediction. It uses the five frozen n=2048,
+lambda-zero learned models above, without fitting again. Candidate construction
+receives no learned or oracle weights.
+
+Route A minimizes movement distance, then action count, then the action sequence
+with forward < left < right. Route B is the best alternative found by forbidding
+each undirected movement edge of A in turn. Stable option IDs follow unpadded
+action-sequence order. Both routes are padded using the existing unique goal
+continuation. Cost ties within 1e-12 predict A without changing probabilities.
+
+For offered-route probabilities, temperature-one log-softmax uses the two
+negative route costs. This equals conditioning the existing full trajectory
+model on the offered pair. It does not marginalize arbitrary routes or corridor
+classes. The deterministic shortest-distance baseline gets accuracy and regret
+but no invented likelihood. The soft distance-only comparator is reported
+separately from that deterministic baseline.
+
+The approved development settings are 20x20, four headings, occupancy 0.20,
+d_safe=2, start (0,0,E), goal (19,19), T=160 and M=200. Seeds are 10000..10009.
+Connectivity-conditioned generation records its attempts, with no carving or
+replacement seeds. Every development layout is preflighted before any labels
+are drawn. Gates require completed legal candidates, the reference terminal
+margin, oracle completion >=0.90 and the existing numerical-domain checks for
+every probabilistic model. All model completion probabilities are recorded.
+
+Run the development study separately from the tiny-recovery evidence:
+
+```powershell
+.venv\Scripts\python.exe -B -W error scripts/run_offered_routes.py --stage development --output results/offered_routes_dev
+```
+
+The study completed with **10/10 preflight passes** and 64 shared synthetic
+choices per layout. Sampled accuracy is averaged within layouts, across the five
+learned models within each layout, and then equally across layouts. Binary Brier
+is mean `(P(option1)-label)**2`. Oracle-cost regret is the predicted offered
+route's oracle cost minus the minimum offered oracle cost.
+
+| Model | Sampled accuracy | Oracle expected accuracy | Binary NLL | Binary Brier |
+|---|---:|---:|---:|---:|
+| Learned, mean of five models | 0.815625 | 0.788517 | 0.420345 | 0.133845 |
+| Fixed weights [1,1,1] | 0.815625 | 0.788517 | 0.429783 | 0.136291 |
+| Deterministic shortest distance | 0.459375 | 0.445321 | Not defined | Not defined |
+| Soft distance-only [1,0,0] | 0.459375 | 0.445321 | 0.693147 | 0.250000 |
+| Ground-truth oracle | 0.815625 | 0.788517 | 0.420169 | 0.133801 |
+
+These are **development results, not final held-out evidence**. The learned and
+fixed models made identical choices on all ten layouts. All ten candidate pairs
+had equal movement distance and turning totals; one pair also had equal
+clearance cost. Consequently these development choices do not test a trade-off
+between turning and clearance. The probability metrics can differ with clearance
+weight magnitude even when predicted options agree. Do not interpret these
+results as evidence that learning beats the fixed-weight baseline.
+
+The predeclared paired whole-layout bootstrap uses 10,000 resamples, seed 920001,
+and 97.5% two-sided linear-percentile intervals for each of two primary accuracy
+comparisons. The development learned-minus-shortest accuracy difference is
+0.35625 with interval [0.090625,0.6625]; learned-minus-fixed is zero with interval
+[0,0]. The criterion for superiority over both baselines is not met. Layout-level
+intervals do not quantify training uncertainty. Development intervals cannot
+replace evaluation on the untouched final set.
+
+Saved outputs in `results/offered_routes_dev/`:
+
+- `identity.json`: configuration, frozen model records, checkpoint hash,
+  dependency versions and relevant source hashes.
+- `preflight.json`: layouts, generation attempts, candidates, features and gates,
+  persisted before any choice labels.
+- `study.json`: shared labels, all model probabilities/predictions, per-layout
+  metrics and paired layout-level summaries.
+- `integrity.json`: hashes used to reject corrupted or incompatible reruns.
+- `final_manifest.json`: sealed final-study configuration, models and source
+  identity, awaiting explicit approval. SHA256:
+  `3ea13b0bbf743f55180024b609bb032614afc4bf883e326e8965f70f5ffd52cc`.
+
+The historical manifest above is not approved and cannot run against the revised
+source identity. No final layouts or labels have been generated. A final study
+preflight failure halts labels across the study, without replacing its seed or
+changing T/M. Configuration changes after development require explicit review.
+Human collection, clinical claims and unrestricted navigation prediction remain
+outside this stage.
+
+Post-implementation review found a coordinate-container bug affecting JSON-
+restored configurations, not the default run. A failing generator/provenance
+regression reproduced it before coordinates and other sequences were normalized
+to immutable tuples. The full suite now passes 266 tests. Post-fix development
+regeneration reproduced every layout, route, label and result above exactly;
+only source provenance changed. Sealing the manifest did not run final layouts.
+
+## Revised competing-cost offered-route experiment
+
+Candidate construction now builds a route library from all six lexicographic
+priority orders of distance, turning and clearance. It uses no ground-truth or
+learned preference weights. Feature-dominated routes are excluded; offered pairs
+must trade an increase in one cost against a decrease in another. Pair selection
+maximizes balanced opposing differences after normalization by each feature's
+range in the library, with deterministic action-sequence tie-breaks. This finite
+library is not the full Pareto frontier of all possible routes.
+
+The shortest-distance baseline now chooses the shortest **offered** route, then
+fewer actions, then the action sequence. Neither offered route is claimed to be
+the unrestricted shortest path. Other models and metrics are unchanged.
+
+Before drawing development choices, the runner rejects designs that have no
+cost opposition, fail to vary each feature on at least 20% of layouts, or fail
+to distinguish both free-feature directions. Four predeclared diagnostic
+preference profiles must choose differently on at least 20% of layouts. Those
+profiles audit the design but never select routes. The runner never requires
+learned models to win in order to accept a study.
+
+All ten existing development seeds passed without replacement or further changes:
+
+- Competing costs: **10/10 pairs**.
+- Nonzero distance differences: **5/10**; turning: **10/10**; clearance: **10/10**.
+- Both free-feature directions distinguishable; normalized design minimum
+  eigenvalue `0.029744`, condition number `66.2408`.
+- Diagnostic preferences produce different choices on **10/10** layouts.
+
+| Model | Sampled accuracy | Oracle expected accuracy | Binary NLL | Binary Brier |
+|---|---:|---:|---:|---:|
+| Learned, mean of five | 0.854688 | 0.835287 | 0.344098 | 0.105605 |
+| Fixed weights [1,1,1] | 0.857813 | 0.822557 | 0.601549 | 0.135616 |
+| Offered-pair shortest distance | 0.857813 | 0.822557 | Not defined | Not defined |
+| Soft distance-only | 0.857813 | 0.822557 | 0.474160 | 0.159276 |
+| Oracle | 0.854688 | 0.835287 | 0.343474 | 0.105335 |
+
+Learned and fixed weights now disagree on one layout. The learned prediction
+agrees with the oracle's more probable option there, but finite sampled choices
+favor the other option. Consequently learned sampled accuracy is slightly worse,
+despite better oracle expected accuracy and probability scores. Accuracy remains
+the predeclared primary metric. The learned-minus-fixed accuracy difference is
+`-0.003125`, with adjusted layout-bootstrap interval `[-0.009375,0]`. This is
+not a superiority result; we do not change the primary metric or hide that fact.
+
+These are development outcomes on previously inspected layout seeds, not fresh
+held-out evidence. The correction makes the task capable of distinguishing
+preferences; it does not guarantee a learned-model win. Synthetic choices also
+do not establish human preference prediction.
+
+```powershell
+.venv\Scripts\python.exe -B -W error scripts/run_offered_routes.py --stage development --output results/offered_routes_tradeoffs_dev
+```
+
+Revised outputs use `results/offered_routes_tradeoffs_dev/`. The original
+development artifacts remain untouched at `results/offered_routes_dev/`.
+Post-implementation review found and reproduced a rounded path-ordering bug and
+missing construction evidence on candidate failure. Search now accumulates the
+stored binary feature values exactly using integer-scaled keys, while planning
+and likelihoods remain float64. Failure records retain every recipe and library.
+All 60 regenerated development recipes matched an independent reverse-graph
+Fraction-arithmetic audit, including action ties. The suite passes 279 tests.
+
+The revised final manifest is
+`results/offered_routes_tradeoffs_dev/final_manifest.json`, SHA256
+`f3efd131512cfb4a6ad92b19fa1e0b5cba11d687b0446bceb50187f03cb74b06`.
+The final set remains ungenerated. This revised manifest is sealed but still
+requires explicit approval before execution.
