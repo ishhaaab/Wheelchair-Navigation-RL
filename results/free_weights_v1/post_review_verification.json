@@ -1,0 +1,10 @@
+{
+  "point_objectives_checked": 20,
+  "max_point_objective_error": 0.0,
+  "max_point_raw_gradient_error": 2.6469779601696886e-23,
+  "all_fit_weights_and_budgets_checked": 2040,
+  "max_weight_mapping_error": 4.440892098500626e-16,
+  "max_budget_error": 2.842170943040401e-14,
+  "historical_and_protected_files_unchanged": 43,
+  "method": "Post-review evaluation of saved parameters only. No sampling or optimization."
+}

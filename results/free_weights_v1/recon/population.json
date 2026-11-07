@@ -1,0 +1,280 @@
+{
+  "method": "Exact expected-features cross-entropy, no sampling",
+  "rows": [
+    {
+      "truth": [
+        0.5,
+        0.35,
+        0.6
+      ],
+      "scale": 0.5,
+      "fixed_population_weights": [
+        1.0,
+        0.39908973068265235,
+        0.656842080973834
+      ],
+      "fixed_population_ratios": [
+        0.39908973068265235,
+        0.656842080973834
+      ],
+      "signed_ratio_bias": [
+        -0.3009102693173476,
+        -0.543157919026166
+      ],
+      "cross_entropy": 16.588317998137274,
+      "raw_gradient": [
+        1.0035613543802602e-08,
+        1.6110420122164291e-09
+      ],
+      "physical_gradient": [
+        0.5454802108187415,
+        3.049694186074703e-08,
+        3.345784982400346e-09
+      ],
+      "iterations": 11,
+      "closure_evaluations": 11,
+      "failure_reason": null,
+      "covariance": [
+        [
+          1.3763097803850755,
+          -1.454718725333798,
+          -0.28808226428637906
+        ],
+        [
+          -1.4547187253337666,
+          9.436414826719025,
+          0.6582503245998956
+        ],
+        [
+          -0.28808226428637873,
+          0.658250324599889,
+          3.8380063402842337
+        ]
+      ],
+      "eigenvalues": [
+        1.1109288634539676,
+        3.7667239087302558,
+        9.773078175204112
+      ],
+      "condition_number": 8.797213302046021,
+      "completion_probability": 0.9999999999779917,
+      "predicted_std_n65536_scale_ratios": [
+        0.0036539458862815143,
+        0.004760121492319549,
+        0.00931778000663095
+      ],
+      "terminal_margin": {
+        "terminal_penalty": 30.0,
+        "margin": 1.0,
+        "reference_weights": [
+          0.5,
+          0.35,
+          0.6
+        ],
+        "starts": [
+          36
+        ],
+        "horizon": 24,
+        "max_optimal_finishing_cost": 6.466998494048357,
+        "finishable_reachable_pairs": 638,
+        "unfinishable_reachable_pairs": 262,
+        "starts_can_finish": true,
+        "passed": true,
+        "limitation": "Reference weights only; finite M does not guarantee completion."
+      }
+    },
+    {
+      "truth": [
+        1.0,
+        0.7,
+        1.2
+      ],
+      "scale": 1.0,
+      "fixed_population_weights": [
+        1.0,
+        0.6999999960309682,
+        1.1999999891652933
+      ],
+      "fixed_population_ratios": [
+        0.6999999960309682,
+        1.1999999891652933
+      ],
+      "signed_ratio_bias": [
+        -3.96903176991259e-09,
+        -1.0834706687390394e-08
+      ],
+      "cross_entropy": 11.636234805964657,
+      "raw_gradient": [
+        -5.634804437661834e-08,
+        -6.592685389173096e-09
+      ],
+      "physical_gradient": [
+        1.9953194652089223e-10,
+        -1.1193166393752563e-07,
+        -9.434216963200015e-09
+      ],
+      "iterations": 8,
+      "closure_evaluations": 10,
+      "failure_reason": null,
+      "covariance": [
+        [
+          1.0390046132054285,
+          1.3105996801246231,
+          -0.4985223203646949
+        ],
+        [
+          1.3105996801246234,
+          29.894356906190918,
+          -0.6202289871362116
+        ],
+        [
+          -0.4985223203646952,
+          -0.6202289871362103,
+          1.0979462231756538
+        ]
+      ],
+      "eigenvalues": [
+        0.5589457257112272,
+        1.504312796748401,
+        29.968049220112384
+      ],
+      "condition_number": 53.615311543852876,
+      "completion_probability": 0.9999999999965425,
+      "predicted_std_n65536_scale_ratios": [
+        0.004432023065241081,
+        0.0033351288004951894,
+        0.005057336472242869
+      ],
+      "terminal_margin": {
+        "terminal_penalty": 30.0,
+        "margin": 1.0,
+        "reference_weights": [
+          1.0,
+          0.7,
+          1.2
+        ],
+        "starts": [
+          36
+        ],
+        "horizon": 24,
+        "max_optimal_finishing_cost": 12.933996988096714,
+        "finishable_reachable_pairs": 638,
+        "unfinishable_reachable_pairs": 262,
+        "starts_can_finish": true,
+        "passed": true,
+        "limitation": "Reference weights only; finite M does not guarantee completion."
+      }
+    },
+    {
+      "truth": [
+        2.0,
+        1.4,
+        2.4
+      ],
+      "scale": 2.0,
+      "fixed_population_weights": [
+        1.0,
+        1.4291863942759357,
+        1.4097002028777639
+      ],
+      "fixed_population_ratios": [
+        1.4291863942759357,
+        1.4097002028777639
+      ],
+      "signed_ratio_bias": [
+        0.7291863942759358,
+        0.20970020287776392
+      ],
+      "cross_entropy": 2.109848800738078,
+      "raw_gradient": [
+        -1.2259114838082597e-09,
+        2.6136902766064062e-09
+      ],
+      "physical_gradient": [
+        -0.1931077199187099,
+        -1.6119887646937059e-09,
+        3.4582525731963187e-09
+      ],
+      "iterations": 9,
+      "closure_evaluations": 9,
+      "failure_reason": null,
+      "covariance": [
+        [
+          0.993797494882092,
+          0.2028921056136939,
+          -0.8234725673037426
+        ],
+        [
+          0.20289210561368895,
+          2.497673902763013,
+          -0.14978779893038224
+        ],
+        [
+          -0.8234725673037437,
+          -0.1497877989303827,
+          0.7341855772105546
+        ]
+      ],
+      "eigenvalues": [
+        0.03021815462742583,
+        1.6251267822545716,
+        2.5703120379736646
+      ],
+      "condition_number": 85.05853748067274,
+      "completion_probability": 1.0,
+      "predicted_std_n65536_scale_ratios": [
+        0.014797456774712099,
+        0.005428084001489789,
+        0.002371022766291299
+      ],
+      "terminal_margin": {
+        "terminal_penalty": 30.0,
+        "margin": 1.0,
+        "reference_weights": [
+          2.0,
+          1.4,
+          2.4
+        ],
+        "starts": [
+          36
+        ],
+        "horizon": 24,
+        "max_optimal_finishing_cost": 25.86799397619343,
+        "finishable_reachable_pairs": 638,
+        "unfinishable_reachable_pairs": 262,
+        "starts_can_finish": true,
+        "passed": true,
+        "limitation": "Reference weights only; finite M does not guarantee completion."
+      }
+    }
+  ],
+  "budgets": [
+    {
+      "weights": [
+        1.0,
+        0.7,
+        1.2
+      ],
+      "budget": 111.55607321818891,
+      "limit": 1000.0
+    },
+    {
+      "weights": [
+        2.0,
+        1.4,
+        2.4
+      ],
+      "budget": 166.74545150834317,
+      "limit": 1000.0
+    },
+    {
+      "weights": [
+        10.0,
+        10.0,
+        10.0
+      ],
+      "budget": 673.3578133588098,
+      "limit": 1000.0
+    }
+  ]
+}

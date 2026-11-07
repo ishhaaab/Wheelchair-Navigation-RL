@@ -1,0 +1,184 @@
+{
+  "diagnostic": {
+    "completion_probability": 0.9999999999965422,
+    "condition_number": 53.61531154385301,
+    "covariance": [
+      [
+        1.0390046132054285,
+        1.3105996801246231,
+        -0.4985223203646949
+      ],
+      [
+        1.3105996801246234,
+        29.894356906190918,
+        -0.6202289871362116
+      ],
+      [
+        -0.4985223203646952,
+        -0.6202289871362103,
+        1.0979462231756538
+      ]
+    ],
+    "covariance_symmetry_error": 1.2212453270876722e-15,
+    "eigenvalues": [
+      0.5589457257112259,
+      1.5043127967483991,
+      29.96804922011239
+    ],
+    "eigenvector_convention": "Columns for ascending eigenvalues of (H+H.T)/2",
+    "eigenvectors": [
+      [
+        -0.7449056381832808,
+        -0.6656076910665625,
+        0.04562884828482178
+      ],
+      [
+        0.01917975656655868,
+        0.04699902723353455,
+        0.9987107831485295
+      ],
+      [
+        -0.6668940898979442,
+        0.7448204434842947,
+        -0.022243646891903446
+      ]
+    ],
+    "expected_features": [
+      7.782193231310826,
+      15.149245672910325,
+      0.719794894090124
+    ],
+    "feature_correlation": 0.23516176552980356,
+    "free_feature_order": [
+      "distance",
+      "turning",
+      "clearance"
+    ],
+    "gates": {
+      "completion_at_least_0.90": true,
+      "condition_at_most_100": true,
+      "fit_box_numerical_domain": true,
+      "min_eigenvalue_at_least_0.1": true,
+      "terminal_penalty_margin": true
+    },
+    "numerical_budgets": {
+      "limit": 1000.0,
+      "truth": 111.55607321818891,
+      "upper_fit_corner": 673.3578133588098
+    },
+    "parameterization": "three_free",
+    "passed": true,
+    "predicted_asymptotic_std_n2048": [
+      0.025071308510457257,
+      0.004158094589268798,
+      0.02384525400451046
+    ],
+    "ratio_scale_order": [
+      "scale",
+      "turning_ratio",
+      "clearance_ratio"
+    ],
+    "ratio_scale_predicted_std_n2048": [
+      0.025071308510457257,
+      0.01886633752768564,
+      0.028608615314119876
+    ],
+    "state_mass_error": 3.3306690738754696e-16,
+    "terminal_margin": {
+      "finishable_reachable_pairs": 638,
+      "horizon": 24,
+      "limitation": "Reference weights only; finite M does not guarantee completion.",
+      "margin": 1.0,
+      "max_optimal_finishing_cost": 12.933996988096714,
+      "passed": true,
+      "reference_weights": [
+        1.0,
+        0.7,
+        1.2
+      ],
+      "starts": [
+        36
+      ],
+      "starts_can_finish": true,
+      "terminal_penalty": 30.0,
+      "unfinishable_reachable_pairs": 262
+    }
+  },
+  "metadata": {
+    "configuration": {
+      "bootstrap_refits": 100,
+      "d_safe": 2.0,
+      "goal": [
+        2,
+        4
+      ],
+      "headings": 4,
+      "horizon": 24,
+      "l2_values": [
+        0.0,
+        0.001,
+        0.01
+      ],
+      "occupied": [
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          2
+        ]
+      ],
+      "parameterization": "three_free",
+      "sample_sizes": [
+        32,
+        128,
+        512,
+        2048
+      ],
+      "seeds": [
+        11,
+        29,
+        47,
+        83,
+        101
+      ],
+      "sensitivity_sizes": [
+        32,
+        2048
+      ],
+      "shape": [
+        5,
+        5
+      ],
+      "start": [
+        2,
+        0,
+        0
+      ],
+      "terminal_penalty": 30.0,
+      "torch_threads": 1,
+      "truth": [
+        1.0,
+        0.7,
+        1.2
+      ]
+    },
+    "fingerprint": "a6290fd2e41b100d534316cb20954b233fe0703f9328957a09f24595b869064a",
+    "model_sources": {
+      "demos": "7dc9f6f6efa85b20097cfe067a6effffc248a034435a42c35240aed565bfaddc",
+      "env": "43267f7b80acb8a8dea77b20edda5744f6b756e00c96a6480edd10484b819f11",
+      "features": "2ad0dfcca5e849df2178fb9fb54b213701deac4602846b7b4da76b76ab3ef8dc",
+      "irl": "5379b0df3a86372fe98af2bf92dbdd65bcffe91cda9909174bbf0a191010b625",
+      "recovery": "cd53f0f50e3bda1332b0f87819ef1fe3986c2703d3189902746ccd306a1a1a13",
+      "soft_dp": "71ed16828137171bb5a56bffd2a9d65f61219f9279f2fdb36677f76bf0f3d932"
+    },
+    "protocol_version": 1,
+    "versions": {
+      "matplotlib": "3.11.2",
+      "numpy": "2.5.4",
+      "python": "3.13.13",
+      "torch": "2.15.0+cpu"
+    }
+  }
+}
