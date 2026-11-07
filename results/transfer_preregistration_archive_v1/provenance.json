@@ -1,0 +1,5 @@
+{
+  "description": "Reconstructed pre-power document; exact byte hash verified against the fingerprint taken before simulation.",
+  "sha256": "b454e19c75b5872ce8ed7820d18a4843628b00c108e945af2c55f9b7b1ace774",
+  "fingerprint_source": "results/transfer_power_v1/power.json"
+}
