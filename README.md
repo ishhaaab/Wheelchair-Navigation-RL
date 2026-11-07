@@ -20,8 +20,7 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pip install -e ".[test]"
 .venv\Scripts\python.exe -B -m pytest -q -W error -p no:cacheprovider
 .venv\Scripts\python.exe -B -W error scripts/verify_planner.py
-.venv\Scripts\python.exe -B -W error scripts/run_tiny_recovery.py --preflight-only
-.venv\Scripts\python.exe -B -W error scripts/run_tiny_recovery.py
+.venv\Scripts\python.exe -B -W error scripts/run_tiny_recovery.py --output results/reproduced_fixed_distance
 ```
 
 On other platforms, use `.venv/bin/python` instead of `.venv\Scripts\python.exe`.
@@ -34,6 +33,34 @@ dataset/sample-size cell is checkpointed. Repeating the command reuses cells
 only when configuration, model-source hashes, dependency versions, and sampled
 prefix hashes match. Incompatible outputs require a different `--output` folder;
 they are not silently overwritten or substituted.
+
+Historical `results/recovery.json` retains the source fingerprint of the code
+that produced it. The scale-correction changes `irl.py` and recovery metadata,
+so current code cannot resume that old directory. Never rewrite its fingerprint
+to make it match. Use a fresh directory. Offered-route loading still checks the
+unchanged historical recovery file's content hash, not whether current inference
+code produced those historical estimates.
+
+For the opt-in three-free alternative, every output directory must be new;
+even preflight-only runs refuse an existing directory and cannot be resumed:
+
+```powershell
+.venv\Scripts\python.exe -B -W error scripts/run_tiny_recovery.py --parameterization three_free --output results/reproduced_three_free --baseline-demos results/recovery_demos.jsonl
+```
+
+The frozen protocol and threshold derivation are in `docs/free-weights-protocol.md`.
+The 65,536-demo scale regression is excluded from routine suite passes. Run it
+explicitly with `WNP_RUN_SCALE_REGRESSION=1`; set `WNP_SCALE_EVIDENCE` to a new
+directory if saving fit evidence. Do not reuse an existing evidence directory.
+
+The completed three-free correction is documented in
+`docs/free-weights-review-handoff.md`, with the paired comparison at
+`results/free_weights_v1/comparison_post_review/report.md`. It corrects ratio
+bias at doubled truth scale, but has higher average ratio error on the original
+scale-1 recovery. Both outcomes are reported. Final verification is 311 passed
+and one explicitly skipped slow regression; that regression passed separately.
+The saved run predates failure-path review fixes; run hashes are preserved and
+post-review source hashes and saved-parameter checks are recorded separately.
 
 For a fresh recomputation without reusing the recorded checkpoints, use a new
 folder, especially when dependency versions or source bytes differ:
@@ -57,9 +84,13 @@ folder, especially when dependency versions or source bytes differ:
   actions. `d` is Euclidean distance to occupied cell centers; default
   `d_safe=2` grid units. Boundaries are not obstacles. No occupancy means zero
   clearance cost. Goal-source and invalid features are exactly zero.
-- Reward is `-w·phi`, temperature 1. Fitting fixes distance weight to 1 and maps
-  the two free weights through softplus. This establishes relative cost units,
-  not unique psychological preferences.
+- Reward is `-w·phi`, temperature 1. Default `fixed_distance` inference fixes
+  distance weight to 1 and maps two raw parameters through softplus, preserving
+  the historical model. Opt-in `three_free` applies softplus to three raw
+  parameters. At fixed temperature the reward scale can be identified. Fixing
+  distance imposes scale=1 and can bias cost ratios at other true scales.
+  Report distance scale separately from turning/distance and clearance/distance.
+  These are model parameters, not uniquely psychological preferences.
 - Terminal value is zero at a goal and `-M` elsewhere. Every legal length-T
   action-labelled sequence has score `-w·sum(phi)+V_T(s_T)`, conditional on its
   initial state. Its log partition is `V_0(s_0)`.
